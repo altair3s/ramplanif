@@ -70,7 +70,7 @@ def cached_preprocess_data(data):
 
 
 # Fonction de compatibilité pour les anciens appels
-def assign_vacation_lines_by_zone(data, vacation_amplitude_hours=8, min_gap_minutes=10):
+def assign_vacation_lines_by_zone(data, vacation_amplitude_hours=9.5, min_gap_minutes=10):
     """Fonction de compatibilité - redirige vers la nouvelle fonction avec shifts"""
     return assign_vacation_lines_by_zone_and_shift(data, vacation_amplitude_hours, min_gap_minutes)
 
@@ -314,7 +314,7 @@ def preprocess_data(data):
     return result_df
 
 
-def assign_vacation_lines_by_zone_and_shift(data, vacation_amplitude_hours=8, min_gap_minutes=10):
+def assign_vacation_lines_by_zone_and_shift(data, vacation_amplitude_hours=9.5, min_gap_minutes=10):
     """Assigne les vols aux lignes de vacation par zone et par vacation (matin/soir)"""
     df = data.copy()
 
@@ -558,8 +558,8 @@ def create_interactive_gantt(data, selected_date, system):
 
     # Couleurs par vacation
     shift_colors = {
-        'Matin': 'rgba(255, 215, 0, 0.8)',  # Or pour le matin
-        'Soir': 'rgba(75, 0, 130, 0.8)'  # Indigo pour le soir
+        'Matin': 'rgba(246, 246, 180, 0.8)',  # Or pour le matin
+        'Soir': 'rgba(180, 214, 246, 0.8)'  # Indigo pour le soir
     }
 
     # Couleurs par zone avec nuances pour matin/soir
@@ -569,7 +569,7 @@ def create_interactive_gantt(data, selected_date, system):
         'Zone_3': {'Matin': 'rgba(153, 255, 153, 0.8)', 'Soir': 'rgba(102, 204, 102, 0.8)'},
         'Zone_4': {'Matin': 'rgba(255, 204, 153, 0.8)', 'Soir': 'rgba(255, 178, 102, 0.8)'},
         'Zone_5': {'Matin': 'rgba(255, 153, 204, 0.8)', 'Soir': 'rgba(255, 102, 178, 0.8)'},
-        'Zone_6': {'Matin': 'rgba(153, 204, 255, 0.8)', 'Soir': 'rgba(102, 178, 255, 0.8)'}
+        'Zone_6': {'Matin': 'rgba(152, 34, 239, 0.8)', 'Soir': 'rgba(152, 34, 239, 0.8)'}
     }
 
     min_time = valid_data['HA'].min()
@@ -627,6 +627,8 @@ def create_interactive_gantt(data, selected_date, system):
                             fill='toself',
                             fillcolor=zone_colors.get(zone, {}).get(shift, 'rgba(200, 200, 200, 0.8)'),
                             line=dict(color='rgb(8,48,107)', width=1.5),
+                            mode='markers+lines',  # Inclure les marqueurs pour le hover
+                            marker=dict(size=0, opacity=0),  # Marqueurs invisibles
                             name=f"{zone}_{shift}",
                             showlegend=False,
                             hovertemplate=f"<b>{row['Annotation']}</b><br>" +
@@ -670,16 +672,7 @@ def create_interactive_gantt(data, selected_date, system):
                             layer="above",
                             row=subplot_idx, col=1
                         )
-                        fig.add_shape(
-                            type="line",
-                            x0=row['HD'],
-                            x1=row['HD'],
-                            y0=y_base - 0.15,
-                            y1=y_top + 0.15,
-                            line=dict(color="#FF0000", width=8),
-                            layer="above",
-                            row=subplot_idx, col=1
-                        )
+
                     elif row['Flight_Type'] == 'Night_Stop':
                         # Liseré bleu à gauche
                         fig.add_shape(
@@ -690,16 +683,6 @@ def create_interactive_gantt(data, selected_date, system):
                             y1=y_top,
                             fillcolor="rgba(0, 102, 255, 0.8)",
                             line=dict(color="#0044CC", width=2),
-                            layer="above",
-                            row=subplot_idx, col=1
-                        )
-                        fig.add_shape(
-                            type="line",
-                            x0=row['HA'],
-                            x1=row['HA'],
-                            y0=y_base - 0.15,
-                            y1=y_top + 0.15,
-                            line=dict(color="#0066FF", width=8),
                             layer="above",
                             row=subplot_idx, col=1
                         )
@@ -775,17 +758,13 @@ def create_interactive_gantt(data, selected_date, system):
         xref="paper",
         yref="paper",
         text="<b>LÉGENDE</b><br><br>" +
-             "🌅 <b>MATIN</b> : 04:30 - 14:00<br>" +
-             "🌆 <b>SOIR</b> : 13:45 - 23:15<br><br>" +
+             "☀️ <b>MATIN</b> : 04:30 - 14:00<br>" +
+             "🌘 <b>SOIR</b> : 13:45 - 23:15<br><br>" +
              "🔴 <b>Liseré Rouge</b> = Départ Sec<br>" +
              "🔵 <b>Liseré Bleu</b> = Night Stop<br><br>" +
-             "📦 <b>Conteneurs colorés</b> :<br>" +
-             "   • Fond or = Vacation matin<br>" +
-             "   • Fond indigo = Vacation soir<br><br>" +
              "📏 <b>L0, L1, L2...</b> = Lignes vacation<br>" +
-             "⚡ <b>1 ligne = 1 équipe de 4 agents</b><br><br>" +
-             "💡 <b>Répartition claire</b><br>" +
-             "   Matin et soir séparés",
+             "⚡ <b>1 ligne = 1 équipe de 4 agents</b><br><br>",
+
         showarrow=False,
         font=dict(size=9, family="Arial"),
         align="left",
@@ -875,8 +854,8 @@ def calculate_team_requirements_from_flights(data, selected_date, system):
         return {}
 
 
-def calculate_hours_and_etp_summary(data, selected_date, vacation_amplitude_hours=8):
-    """Calcule la synthèse des heures et ETP avec répartition matin/soir"""
+def calculate_hours_and_etp_summary(data, selected_date, vacation_amplitude_hours=9.5):
+    """Calcule la synthèse des heures et ETP basée sur le nombre de vacations (zone/shift) avec effectifs"""
     try:
         # Filtrer par date
         date_mask = pd.to_datetime(data['DATE']).dt.date == selected_date.date()
@@ -891,69 +870,128 @@ def calculate_hours_and_etp_summary(data, selected_date, vacation_amplitude_hour
         summary = {}
         total_hours = 0
         total_etp = 0
+        total_vacations = 0
+        total_agents = 0
 
-        # Calculer pour chaque zone et vacation
+        # Calculer pour chaque zone
         for zone in processed_data['ZONE'].unique():
             zone_summary = {
-                'Matin': {'nb_vacations': 0, 'heures_totales': 0, 'etp': 0, 'nb_vols': 0},
-                'Soir': {'nb_vacations': 0, 'heures_totales': 0, 'etp': 0, 'nb_vols': 0}
+                'Matin': {'nb_vacations': 0, 'heures_totales': 0, 'etp': 0, 'nb_vols': 0, 'nb_lignes': 0, 'agents': 0,
+                          'qualifs': {}},
+                'Soir': {'nb_vacations': 0, 'heures_totales': 0, 'etp': 0, 'nb_vols': 0, 'nb_lignes': 0, 'agents': 0,
+                         'qualifs': {}}
             }
 
             for shift in ['Matin', 'Soir']:
                 shift_data = processed_data[(processed_data['ZONE'] == zone) & (processed_data['Shift'] == shift)]
 
                 if len(shift_data) > 0:
-                    # Nombre de lignes de vacation pour cette zone et vacation
-                    nb_vacations = len(shift_data['Vacation Line'].unique())
+                    # UNE vacation par combinaison zone/shift s'il y a des vols
+                    nb_vacations = 1
 
-                    # Heures totales pour cette zone et vacation
-                    shift_hours = nb_vacations * vacation_amplitude_hours
+                    # Heures totales = 1 vacation × amplitude
+                    shift_hours = nb_vacations * vacation_amplitude_hours * 4
 
-                    # ETP pour cette zone et vacation
-                    shift_etp = shift_hours / 8
+                    # ETP pour cette vacation
+                    shift_etp = shift_hours / 9.5
+
+                    # Nombre de lignes dans cette vacation
+                    nb_lignes = len(shift_data['Vacation Line'].unique())
+
+                    # Agents nécessaires : 4 agents par vacation (1 équipe)
+                    nb_agents = nb_vacations * 4
+
+                    # Qualifications nécessaires
+                    qualifications = {
+                        'CZ': nb_vacations,  # 1 CZ par vacation
+                        'MOP': nb_vacations,  # 1 MOP par vacation
+                        'PUSH': nb_vacations,  # 1 PUSH par vacation
+                        'AGENT': nb_vacations  # 1 AGENT par vacation
+                    }
 
                     zone_summary[shift] = {
                         'nb_vacations': nb_vacations,
                         'heures_totales': shift_hours,
                         'etp': round(shift_etp, 2),
-                        'nb_vols': len(shift_data)
+                        'nb_vols': len(shift_data),
+                        'nb_lignes': nb_lignes,
+                        'agents': nb_agents,
+                        'qualifs': qualifications
                     }
 
                     total_hours += shift_hours
                     total_etp += shift_etp
+                    total_vacations += nb_vacations
+                    total_agents += nb_agents
 
             # Totaux pour la zone
             zone_total_vacations = zone_summary['Matin']['nb_vacations'] + zone_summary['Soir']['nb_vacations']
             zone_total_hours = zone_summary['Matin']['heures_totales'] + zone_summary['Soir']['heures_totales']
             zone_total_etp = zone_summary['Matin']['etp'] + zone_summary['Soir']['etp']
             zone_total_vols = zone_summary['Matin']['nb_vols'] + zone_summary['Soir']['nb_vols']
+            zone_total_lignes = zone_summary['Matin']['nb_lignes'] + zone_summary['Soir']['nb_lignes']
+            zone_total_agents = zone_summary['Matin']['agents'] + zone_summary['Soir']['agents']
+
+            # Qualifications totales pour la zone
+            zone_total_qualifs = {
+                'CZ': zone_summary['Matin']['qualifs'].get('CZ', 0) + zone_summary['Soir']['qualifs'].get('CZ', 0),
+                'MOP': zone_summary['Matin']['qualifs'].get('MOP', 0) + zone_summary['Soir']['qualifs'].get('MOP', 0),
+                'PUSH': zone_summary['Matin']['qualifs'].get('PUSH', 0) + zone_summary['Soir']['qualifs'].get('PUSH',
+                                                                                                              0),
+                'AGENT': zone_summary['Matin']['qualifs'].get('AGENT', 0) + zone_summary['Soir']['qualifs'].get('AGENT',
+                                                                                                                0)
+            }
 
             zone_summary['TOTAL_ZONE'] = {
                 'nb_vacations': zone_total_vacations,
                 'heures_totales': zone_total_hours,
                 'etp': round(zone_total_etp, 2),
-                'nb_vols': zone_total_vols
+                'nb_vols': zone_total_vols,
+                'nb_lignes': zone_total_lignes,
+                'agents': zone_total_agents,
+                'qualifs': zone_total_qualifs
             }
 
             summary[zone] = zone_summary
 
         # Totaux généraux
+        total_qualifs_matin = {
+            'CZ': sum(s['Matin']['qualifs'].get('CZ', 0) for s in summary.values() if 'Matin' in s),
+            'MOP': sum(s['Matin']['qualifs'].get('MOP', 0) for s in summary.values() if 'Matin' in s),
+            'PUSH': sum(s['Matin']['qualifs'].get('PUSH', 0) for s in summary.values() if 'Matin' in s),
+            'AGENT': sum(s['Matin']['qualifs'].get('AGENT', 0) for s in summary.values() if 'Matin' in s)
+        }
+
+        total_qualifs_soir = {
+            'CZ': sum(s['Soir']['qualifs'].get('CZ', 0) for s in summary.values() if 'Soir' in s),
+            'MOP': sum(s['Soir']['qualifs'].get('MOP', 0) for s in summary.values() if 'Soir' in s),
+            'PUSH': sum(s['Soir']['qualifs'].get('PUSH', 0) for s in summary.values() if 'Soir' in s),
+            'AGENT': sum(s['Soir']['qualifs'].get('AGENT', 0) for s in summary.values() if 'Soir' in s)
+        }
+
         summary['TOTAL'] = {
-            'nb_vacations': sum(s['TOTAL_ZONE']['nb_vacations'] for s in summary.values() if 'TOTAL_ZONE' in s),
+            'nb_vacations': total_vacations,
             'heures_totales': total_hours,
             'etp': round(total_etp, 2),
             'nb_vols': len(processed_data),
+            'agents': total_agents,
             'matin_total': {
                 'nb_vacations': sum(s['Matin']['nb_vacations'] for s in summary.values() if 'Matin' in s),
                 'heures_totales': sum(s['Matin']['heures_totales'] for s in summary.values() if 'Matin' in s),
                 'etp': round(sum(s['Matin']['etp'] for s in summary.values() if 'Matin' in s), 2),
-                'nb_vols': sum(s['Matin']['nb_vols'] for s in summary.values() if 'Matin' in s)
+                'nb_vols': sum(s['Matin']['nb_vols'] for s in summary.values() if 'Matin' in s),
+                'nb_lignes': sum(s['Matin']['nb_lignes'] for s in summary.values() if 'Matin' in s),
+                'agents': sum(s['Matin']['agents'] for s in summary.values() if 'Matin' in s),
+                'qualifs': total_qualifs_matin
             },
             'soir_total': {
                 'nb_vacations': sum(s['Soir']['nb_vacations'] for s in summary.values() if 'Soir' in s),
                 'heures_totales': sum(s['Soir']['heures_totales'] for s in summary.values() if 'Soir' in s),
                 'etp': round(sum(s['Soir']['etp'] for s in summary.values() if 'Soir' in s), 2),
-                'nb_vols': sum(s['Soir']['nb_vols'] for s in summary.values() if 'Soir' in s)
+                'nb_vols': sum(s['Soir']['nb_vols'] for s in summary.values() if 'Soir' in s),
+                'nb_lignes': sum(s['Soir']['nb_lignes'] for s in summary.values() if 'Soir' in s),
+                'agents': sum(s['Soir']['agents'] for s in summary.values() if 'Soir' in s),
+                'qualifs': total_qualifs_soir
             }
         }
 
@@ -965,7 +1003,7 @@ def calculate_hours_and_etp_summary(data, selected_date, vacation_amplitude_hour
 
 
 def create_charge_curve(data, selected_date):
-    """Crée la courbe de charge par tranche de 15 minutes avec des courbes en escalier"""
+    """Crée une courbe de charge élégante avec design moderne"""
     try:
         # Filtrer par date avec une conversion robuste
         date_mask = pd.to_datetime(data['DATE']).dt.date == selected_date.date()
@@ -1020,49 +1058,225 @@ def create_charge_curve(data, selected_date):
             'VOLD (HD)': hd_counts.reindex(all_times, fill_value=0)
         }).reset_index(drop=True)
 
-        # Créer un graphique en escalier avec Plotly
+        # Calculer la charge totale
+        charge_curve['Total'] = charge_curve['VOLA (HA)'] + charge_curve['VOLD (HD)']
+
+        # Créer le graphique avec design moderne
         fig = go.Figure()
 
-        # Ajouter la courbe VOLA en escalier
+        # Zone de fond pour les périodes d'activité
+        min_time = charge_curve['Tranche Horaire'].min()
+        max_time = charge_curve['Tranche Horaire'].max()
+
+        # Zones de vacation en arrière-plan
+        morning_start = min_time.replace(hour=4, minute=30, second=0)
+        morning_end = min_time.replace(hour=14, minute=0, second=0)
+        evening_start = min_time.replace(hour=13, minute=45, second=0)
+        evening_end = min_time.replace(hour=23, minute=15, second=0)
+
+        # Zone matin
+        fig.add_shape(
+            type="rect",
+            x0=morning_start,
+            x1=morning_end,
+            y0=0,
+            y1=charge_curve['Total'].max() * 1.1,
+            fillcolor="rgba(255, 215, 0, 0.1)",
+            line=dict(width=0),
+            layer="below"
+        )
+
+        # Zone soir
+        fig.add_shape(
+            type="rect",
+            x0=evening_start,
+            x1=evening_end,
+            y0=0,
+            y1=charge_curve['Total'].max() * 1.1,
+            fillcolor="rgba(75, 0, 130, 0.1)",
+            line=dict(width=0),
+            layer="below"
+        )
+
+        # Courbe VOLA (Arrivées) avec dégradé élégant
         fig.add_trace(go.Scatter(
             x=charge_curve['Tranche Horaire'],
             y=charge_curve['VOLA (HA)'],
             mode='lines',
-            line=dict(shape='hv', color='#FF0000', width=3),  # hv = horizontal puis vertical
-            name='VOLA (Arrivées)',
-            fill='tonexty' if 'VOLD (HD)' in charge_curve.columns else 'tozeroy',
-            fillcolor='rgba(255, 0, 0, 0.1)'
+            line=dict(
+                color='rgba(220, 38, 127, 1)',
+                width=3,
+                shape='spline',
+                smoothing=0.3
+            ),
+            name='Arrivées (VOLA)',
+            fill='tonexty',
+            fillcolor='rgba(220, 38, 127, 0.2)',
+            hovertemplate='<b>Arrivées</b><br>' +
+                          'Heure: %{x|%H:%M}<br>' +
+                          'Vols: %{y}<br>' +
+                          '<extra></extra>'
         ))
 
-        # Ajouter la courbe VOLD en escalier
+        # Courbe VOLD (Départs) avec dégradé élégant
         fig.add_trace(go.Scatter(
             x=charge_curve['Tranche Horaire'],
             y=charge_curve['VOLD (HD)'],
             mode='lines',
-            line=dict(shape='hv', color='#87CEEB', width=3),  # hv = horizontal puis vertical
-            name='VOLD (Départs)',
+            line=dict(
+                color='rgba(99, 110, 250, 1)',
+                width=3,
+                shape='spline',
+                smoothing=0.3
+            ),
+            name='Départs (VOLD)',
             fill='tozeroy',
-            fillcolor='rgba(135, 206, 235, 0.1)'
+            fillcolor='rgba(99, 110, 250, 0.2)',
+            hovertemplate='<b>Départs</b><br>' +
+                          'Heure: %{x|%H:%M}<br>' +
+                          'Vols: %{y}<br>' +
+                          '<extra></extra>'
         ))
 
+        # Ligne de charge totale
+        fig.add_trace(go.Scatter(
+            x=charge_curve['Tranche Horaire'],
+            y=charge_curve['Total'],
+            mode='lines+markers',
+            line=dict(
+                color='rgba(255, 140, 0, 1)',
+                width=4,
+                dash='dot'
+            ),
+            marker=dict(
+                size=6,
+                color='rgba(255, 140, 0, 1)',
+                line=dict(width=2, color='white')
+            ),
+            name='Charge Totale',
+            hovertemplate='<b>Charge Totale</b><br>' +
+                          'Heure: %{x|%H:%M}<br>' +
+                          'Total vols: %{y}<br>' +
+                          '<extra></extra>'
+        ))
+
+        # Trouver et annoter les pics d'activité
+        max_total = charge_curve['Total'].max()
+        max_time_idx = charge_curve['Total'].idxmax()
+        max_time = charge_curve.loc[max_time_idx, 'Tranche Horaire']
+
+        # Pic principal
+        fig.add_annotation(
+            x=max_time,
+            y=max_total,
+            text=f"Pic: {max_total} vols<br>{max_time.strftime('%H:%M')}",
+            showarrow=True,
+            arrowhead=2,
+            arrowsize=1,
+            arrowwidth=2,
+            arrowcolor="rgba(255, 140, 0, 0.8)",
+            ax=0,
+            ay=-50,
+            bordercolor="rgba(255, 140, 0, 0.8)",
+            borderwidth=2,
+            bgcolor="rgba(255, 255, 255, 0.9)",
+            font=dict(size=11, color="rgba(255, 140, 0, 1)")
+        )
+
+        # Seuils d'alerte visuels
+        avg_total = charge_curve['Total'].mean()
+        seuil_critique = avg_total * 1.5
+
+        if max_total > seuil_critique:
+            fig.add_hline(
+                y=seuil_critique,
+                line_dash="dash",
+                line_color="rgba(255, 69, 58, 0.8)",
+                line_width=2,
+                annotation_text=f"⚠️ Seuil critique ({int(seuil_critique)} vols)",
+                annotation_position="bottom right",
+                annotation_font_color="rgba(255, 69, 58, 1)"
+            )
+
+        # Moyenne
+        fig.add_hline(
+            y=avg_total,
+            line_dash="dot",
+            line_color="rgba(142, 142, 147, 0.8)",
+            line_width=1,
+            annotation_text=f"📊 Moyenne ({avg_total:.1f} vols)",
+            annotation_position="top right",
+            annotation_font_color="rgba(142, 142, 147, 1)"
+        )
+
+        # Configuration du layout avec style moderne
         fig.update_layout(
-            title="Courbe de Charge par Tranche de 15 Minutes (Escalier)",
+            title={
+                'text': f"<b>Courbe de Charge Dynamique</b><br><span style='font-size:14px'> {selected_date.strftime('%A %d %B %Y')}</span>",
+                'x': 0.5,
+                'xanchor': 'center',
+                'font': {'size': 20, 'color': 'rgba(55, 53, 47, 1)'}
+            },
             xaxis=dict(
-                title="Heure",
+                title="<b>Heure de la journée</b>",
                 tickformat="%H:%M",
                 tickangle=45,
-                gridcolor='rgba(128, 128, 128, 0.2)'
+                gridcolor='rgba(200, 200, 200, 0.3)',
+                showgrid=True,
+                zeroline=False,
+                tickfont=dict(size=11),
+                title_font=dict(size=14, color='rgba(55, 53, 47, 1)')
             ),
             yaxis=dict(
-                title="Nombre de Vols",
-                gridcolor='rgba(128, 128, 128, 0.2)'
+                title="<b>Nombre de Vols</b>",
+                gridcolor='rgba(200, 200, 200, 0.3)',
+                showgrid=True,
+                zeroline=False,
+                tickfont=dict(size=11),
+                title_font=dict(size=14, color='rgba(55, 53, 47, 1)')
             ),
-            legend_title_text="Type de Vol",
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="center",
+                x=0.5,
+                bgcolor="rgba(255, 255, 255, 0.8)",
+                bordercolor="rgba(200, 200, 200, 0.5)",
+                borderwidth=1,
+                font=dict(size=12)
+            ),
             template="plotly_white",
-            width=1500,
-            height=600,
-            plot_bgcolor='rgba(240, 248, 255, 0.8)',
-            hovermode='x unified'
+            width=1600,
+            height=700,
+            plot_bgcolor='rgba(248, 249, 250, 1)',
+            paper_bgcolor='white',
+            hovermode='x unified',
+            margin=dict(l=80, r=80, t=120, b=80),
+            font=dict(family="Arial, sans-serif")
+        )
+
+        # Annotations pour les zones de vacation
+        fig.add_annotation(
+            x=morning_start + (morning_end - morning_start) / 2,
+            y=charge_curve['Total'].max() * 1.05,
+            text="VACATION MATIN",
+            showarrow=False,
+            font=dict(size=12, color="rgba(5, 5, 5, 0.8)", family="Arial Bold"),
+            bgcolor="rgba(255, 215, 0, 0.1)",
+            bordercolor="rgba(255, 215, 0, 0.3)",
+            borderwidth=1
+        )
+
+        fig.add_annotation(
+            x=evening_start + (evening_end - evening_start) / 2,
+            y=charge_curve['Total'].max() * 1.05,
+            text="VACATION SOIR",
+            showarrow=False,
+            font=dict(size=12, color="rgba(5, 5, 5, 0.8)", family="Arial Bold"),
+            bgcolor="rgba(75, 0, 130, 0.1)",
+            bordercolor="rgba(75, 0, 130, 0.3)",
+            borderwidth=1
         )
 
         return fig
@@ -1304,8 +1518,8 @@ def main():
                     with col1:
                         vacation_amplitude_summary = st.selectbox(
                             "Amplitude des vacations (heures)",
-                            options=[4, 6, 8, 10, 12],
-                            index=2,  # 8 heures par défaut
+                            options=[8.0, 9.0, 9.5, 10.0, 10.5, 11.0, 12.0],
+                            index=2,  # 9.5 heures par défaut
                             key="vacation_amplitude_summary"
                         )
                     with col2:
@@ -1318,7 +1532,7 @@ def main():
 
                     if hours_summary and 'TOTAL' in hours_summary:
                         # Affichage des totaux généraux
-                        st.subheader("🎯 Totaux généraux")
+                        st.subheader("Totaux généraux")
                         total_data = hours_summary.get('TOTAL', {})
 
                         col1, col2, col3, col4 = st.columns(4)
@@ -1344,11 +1558,11 @@ def main():
                             )
 
                         # Répartition Matin/Soir
-                        st.subheader("🌅🌆 Répartition Matin/Soir")
+                        st.subheader("Répartition Matin/Soir")
                         col1, col2 = st.columns(2)
 
                         with col1:
-                            st.markdown("#### 🌅 VACATION MATIN (04:30 - 14:00)")
+                            st.markdown("#### VACATION MATIN (04:30 - 14:00)")
                             matin_data = total_data.get('matin_total', {})
                             col_m1, col_m2 = st.columns(2)
                             with col_m1:
@@ -1356,10 +1570,10 @@ def main():
                                 st.metric("Heures Matin", f"{matin_data.get('heures_totales', 0)}h")
                             with col_m2:
                                 st.metric("ETP Matin", matin_data.get('etp', 0))
-                                st.metric("Vols Matin", matin_data.get('nb_vols', 0))
+                                st.metric("Lignes Matin", matin_data.get('nb_lignes', 0))
 
                         with col2:
-                            st.markdown("#### 🌆 VACATION SOIR (13:45 - 23:15)")
+                            st.markdown("#### VACATION SOIR (13:45 - 23:15)")
                             soir_data = total_data.get('soir_total', {})
                             col_s1, col_s2 = st.columns(2)
                             with col_s1:
@@ -1367,7 +1581,7 @@ def main():
                                 st.metric("Heures Soir", f"{soir_data.get('heures_totales', 0)}h")
                             with col_s2:
                                 st.metric("ETP Soir", soir_data.get('etp', 0))
-                                st.metric("Vols Soir", soir_data.get('nb_vols', 0))
+                                st.metric("Lignes Soir", soir_data.get('nb_lignes', 0))
 
                         # Détail par zone avec matin/soir
                         st.subheader("📊 Détail par zone et vacation")
@@ -1378,32 +1592,57 @@ def main():
                             if zone != 'TOTAL':
                                 # Ligne Matin
                                 matin_info = zone_data.get('Matin', {})
-                                detailed_data.append({
-                                    'Zone': zone,
-                                    'Vacation': 'Matin',
-                                    'Nb Lignes': matin_info.get('nb_vacations', 0),
-                                    'Nb Vols': matin_info.get('nb_vols', 0),
-                                    'Heures': f"{matin_info.get('heures_totales', 0)}h",
-                                    'ETP': matin_info.get('etp', 0)
-                                })
+                                if matin_info.get('nb_vacations', 0) > 0:
+                                    detailed_data.append({
+                                        'Zone': zone,
+                                        'Vacation': 'Matin',
+                                        'Vacation Active': '✅',
+                                        'Nb Lignes': matin_info.get('nb_lignes', 0),
+                                        'Nb Vols': matin_info.get('nb_vols', 0),
+                                        'Heures': f"{matin_info.get('heures_totales', 0)}h",
+                                        'ETP': matin_info.get('etp', 0)
+                                    })
+                                else:
+                                    detailed_data.append({
+                                        'Zone': zone,
+                                        'Vacation': 'Matin',
+                                        'Vacation Active': '❌',
+                                        'Nb Lignes': 0,
+                                        'Nb Vols': 0,
+                                        'Heures': "0h",
+                                        'ETP': 0
+                                    })
 
                                 # Ligne Soir
                                 soir_info = zone_data.get('Soir', {})
-                                detailed_data.append({
-                                    'Zone': zone,
-                                    'Vacation': 'Soir',
-                                    'Nb Lignes': soir_info.get('nb_vacations', 0),
-                                    'Nb Vols': soir_info.get('nb_vols', 0),
-                                    'Heures': f"{soir_info.get('heures_totales', 0)}h",
-                                    'ETP': soir_info.get('etp', 0)
-                                })
+                                if soir_info.get('nb_vacations', 0) > 0:
+                                    detailed_data.append({
+                                        'Zone': zone,
+                                        'Vacation': 'Soir',
+                                        'Vacation Active': '✅',
+                                        'Nb Lignes': soir_info.get('nb_lignes', 0),
+                                        'Nb Vols': soir_info.get('nb_vols', 0),
+                                        'Heures': f"{soir_info.get('heures_totales', 0)}h",
+                                        'ETP': soir_info.get('etp', 0)
+                                    })
+                                else:
+                                    detailed_data.append({
+                                        'Zone': zone,
+                                        'Vacation': 'Soir',
+                                        'Vacation Active': '❌',
+                                        'Nb Lignes': 0,
+                                        'Nb Vols': 0,
+                                        'Heures': "0h",
+                                        'ETP': 0
+                                    })
 
                                 # Ligne Total Zone
                                 total_zone = zone_data.get('TOTAL_ZONE', {})
                                 detailed_data.append({
                                     'Zone': f"**{zone} TOTAL**",
                                     'Vacation': '**TOTAL**',
-                                    'Nb Lignes': f"**{total_zone.get('nb_vacations', 0)}**",
+                                    'Vacation Active': f"**{total_zone.get('nb_vacations', 0)} actives**",
+                                    'Nb Lignes': f"**{total_zone.get('nb_lignes', 0)}**",
                                     'Nb Vols': f"**{total_zone.get('nb_vols', 0)}**",
                                     'Heures': f"**{total_zone.get('heures_totales', 0)}h**",
                                     'ETP': f"**{total_zone.get('etp', 0)}**"
@@ -1414,42 +1653,6 @@ def main():
                             st.dataframe(df_detailed, use_container_width=True, hide_index=True)
 
                         # Graphiques de répartition
-                        st.subheader("📈 Visualisations")
-                        col1, col2 = st.columns(2)
-
-                        with col1:
-                            # Graphique en secteurs Matin vs Soir
-                            matin_etp = total_data.get('matin_total', {}).get('etp', 0)
-                            soir_etp = total_data.get('soir_total', {}).get('etp', 0)
-
-                            if matin_etp > 0 or soir_etp > 0:
-                                fig_pie = px.pie(
-                                    values=[matin_etp, soir_etp],
-                                    names=['Matin', 'Soir'],
-                                    title="Répartition ETP Matin/Soir",
-                                    color_discrete_sequence=['#FFD700', '#4B0082']
-                                )
-                                st.plotly_chart(fig_pie, use_container_width=True)
-
-                        with col2:
-                            # Graphique en barres par zone
-                            zone_names = []
-                            zone_etps = []
-                            for zone, zone_data in hours_summary.items():
-                                if zone != 'TOTAL':
-                                    zone_names.append(zone)
-                                    zone_etps.append(zone_data.get('TOTAL_ZONE', {}).get('etp', 0))
-
-                            if zone_names:
-                                fig_bar = px.bar(
-                                    x=zone_names,
-                                    y=zone_etps,
-                                    title="ETP par zone",
-                                    labels={'x': 'Zone', 'y': 'ETP'},
-                                    color=zone_etps,
-                                    color_continuous_scale='Viridis'
-                                )
-                                st.plotly_chart(fig_bar, use_container_width=True)
 
                         # Informations complémentaires
                         st.subheader("ℹ️ Informations sur le calcul")
@@ -1458,18 +1661,20 @@ def main():
                         with col1:
                             st.info(
                                 f"**Principe de calcul :**\n"
-                                f"• Une équipe par zone par vacation\n"
-                                f"• Amplitude vacation : {vacation_amplitude_summary}h\n"
-                                f"• ETP = Heures totales ÷ 8h standard\n"
-                                f"• Équipe = 4 agents (CZ+MOP+PUSH+AGENT)"
+                                f"• 1 vacation (pour l'équipe) = {vacation_amplitude_summary}h x 4 par zone/shift\n"
+                                f"• Vacation active = présence de vols\n"
+                                f"• ETP = Heures vacation (equipe) ÷ 9.5h \n"
+                                f"• Zone1-Matin + Zone1-Soir = 2 vacations\n"
+                                f"• Multiple lignes possible dans 1 vacation (vols simultanés) avec renforts éventuels"
                             )
 
                         with col2:
                             st.info(
                                 f"**Créneaux de vacation :**\n"
-                                f"🌅 **Matin :** 04:30 - 14:00\n"
-                                f"🌆 **Soir :** 13:45 - 23:15\n"
-                                f"⏰ **Chevauchement :** 13:45 - 14:00"
+                                f"☀️ **Matin :** 04:30 - 14:00\n"
+                                f"🌘 **Soir :** 13:45 - 23:15\n"
+                                f"⏰ **Chevauchement :** 13:45 - 14:00\n"
+                                f"📊 **Amplitude :** {vacation_amplitude_summary}h par vacation"
                             )
                     else:
                         st.info("Aucune donnée pour calculer la synthèse RH")
@@ -1486,7 +1691,7 @@ def main():
                     if requirements:
                         for shift_name, shift_req in requirements.items():
                             # Icônes pour les vacations
-                            shift_icon = "🌅" if shift_name == "Matin" else "🌆"
+                            shift_icon = "☀️" if shift_name == "Matin" else "🌘"
                             shift_hours = "04:30 - 14:00" if shift_name == "Matin" else "13:45 - 23:15"
 
                             st.subheader(f"{shift_icon} Vacation {shift_name} ({shift_hours})")
@@ -1552,9 +1757,9 @@ def main():
 
                         col1, col2, col3 = st.columns(3)
                         with col1:
-                            st.metric(" Agents Matin", total_agents_matin)
+                            st.metric("☀️ Agents Matin", total_agents_matin)
                         with col2:
-                            st.metric(" Agents Soir", total_agents_soir)
+                            st.metric("🌘 Agents Soir", total_agents_soir)
                         with col3:
                             st.metric("📊 Total Agents/Jour", total_agents_matin + total_agents_soir)
 
